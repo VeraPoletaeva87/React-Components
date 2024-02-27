@@ -2,14 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import Loader from '../loader/loader';
 import './detail.css';
-
-interface BookItem {
-  title: string;
-  publishedYear: string;
-  novel: boolean;
-  audiobook: boolean;
-  productionNumber: string;
-}
+import { BookItem, beerApi } from './detail-api';
 
 function Detail() {
   const [item, setItem] = useState<BookItem>();
@@ -20,17 +13,11 @@ function Detail() {
 
   const { id } = state;
 
-  const loadData = useCallback((id: number) => {
+  const loadData = useCallback(async (id: number) => {
     setIsLoading(true);
-    const uid = id.toString();
-    const Url = `https://stapi.co/api/v2/rest/book/?uid=${uid}`;
-
-    fetch(Url)
-      .then((response) => response.json())
-      .then((result) => {
-        setItem(result.book);
-        setIsLoading(false);
-      });
+    const result = await beerApi(id);
+    setItem(result);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -42,25 +29,34 @@ function Detail() {
   };
 
   return (
-    <>
-      {isLoading && <Loader />}
-      {!isLoading && (
+    <div data-testid="details-panel">
+      {isLoading ? (
+        <Loader />
+      ) : (
         <div className="detail-block">
-          <h1>Book details:</h1>
-          <h2>Title: {item?.title}</h2>
-          <div className="description">Publish date: {item?.publishedYear}</div>
-          <div>Novel: {item?.novel ? 'yes' : 'no'}</div>
-          <div>Audiobook: {item?.audiobook ? 'yes' : 'no'}</div>
-          <div>
-            Production Number:{' '}
-            {item?.productionNumber ? item.productionNumber : '--'}
+          <h1>Beer details:</h1>
+          <h2 data-testid="detail-name">name: {item?.name}</h2>
+          <div className="bold">Description</div>
+          <div
+            className="detail-description margin-left-small"
+            data-testid="detail-description"
+          >
+            {item?.description}
           </div>
-          <button className="close" onClick={closeHandler}>
+          <div className="bold">Tagline</div>
+          <div className="margin-left-small" data-testid="detail-tagline">
+            {item?.tagline}
+          </div>
+          <button
+            data-testid="detail-close-button"
+            className="close"
+            onClick={closeHandler}
+          >
             Close
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

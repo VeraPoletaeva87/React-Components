@@ -1,22 +1,17 @@
 import './App.css';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
-import Detail from './components/detailComponent/detail';
-import Home from './components/homeComponent/home';
-import ErrorPage from './components/errorPage/error';
+import { HashRouter } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
+import RoutesComponent from './components/routesComponent/roures';
 
 function App() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route path="/details/:id" element={<Detail />} />
-          </Route>
-          <Route path="*" element={<ErrorPage />} />
-        </Routes>
-      </BrowserRouter>
-    </ErrorBoundary>
+    <div data-testid="">
+      <ErrorBoundary>
+        <HashRouter>
+          <RoutesComponent />
+        </HashRouter>
+      </ErrorBoundary>
+    </div>
   );
 }
 

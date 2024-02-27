@@ -1,29 +1,27 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../paginationComponent/pagination';
 import './result.css';
 import Item from '../itemComponent/item';
 import Loader from '../loader/loader';
+import { AppContext, AppContextType } from '../../AppContext';
+import { ListItem, listApi } from './result-api';
 
-interface Item {
-  uid: number;
-  title: string;
-  publishedYear: string;
-}
-
-interface ListProps {
-  searchString: string;
-}
-
-function Result(props: ListProps) {
-  const { searchString = '' } = props;
-  const [items, setItems] = useState([]);
+function Result() {
+  const { searchString, items, setItems } =
+    useContext<AppContextType>(AppContext);
   const [isLoading, setIsLoading] = useState(false);
   const [pageLimit, setPageLimit] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const urlBase = 'https://stapi.co/api/v2/rest/book/search';
+  const urlBase = 'https://api.punkapi.com/v2/beers';
 
   const navigate = useNavigate();
 
@@ -43,31 +41,31 @@ function Result(props: ListProps) {
   };
 
   const loadData = useCallback(
-    (searchString: string, pageNumber: string, pageLimit: string) => {
+    async (searchString: string, pageNumber: string, pageLimit: string) => {
       setIsLoading(true);
-      const params = new URLSearchParams({ search: searchString });
+      const params = new URLSearchParams({ beer_name: searchString });
       const paramsString = params.toString();
       let url = searchString ? `${urlBase}?${paramsString}` : urlBase;
-      url = url + `?pageNumber=${pageNumber}&pageSize=${pageLimit}`;
-      fetch(url)
-        .then((response) => response.json())
-        .then((itemList) => {
-          setItems(itemList.books);
-          setIsLoading(false);
-        });
+      url = searchString
+        ? url + `&page=${pageNumber}&per_page=${pageLimit}`
+        : url + `?page=${pageNumber}&per_page=${pageLimit}`;
+      const result = await listApi(url);
+      setItems(result);
+      setIsLoading(false);
     },
     []
   );
 
+  const loadBase = useCallback(async () => {
+    const result = await listApi(urlBase);
+    setTotalPages(Math.ceil(result.length / pageLimit));
+    setCurrentPage(1);
+  }, [pageLimit]);
+
   // calculate the page number
   useEffect(() => {
-    fetch(urlBase)
-      .then((response) => response.json())
-      .then((itemList) => {
-        setTotalPages(Math.ceil(itemList.books.length / pageLimit));
-        setCurrentPage(1);
-      });
-  }, [pageLimit]);
+    loadBase();
+  }, [loadBase]);
 
   // load items
   useEffect(() => {
@@ -92,16 +90,20 @@ function Result(props: ListProps) {
       {isLoading ? (
         <Loader />
       ) : (
-        <ul>
-          {items?.map((item: Item) => (
-            <Item
-              key={item.uid}
-              uid={item.uid}
-              title={item.title}
-              publishedYear={item.publishedYear}
-              clickHandler={itemClickHandler}
-            />
-          ))}
+        <ul data-testid="list">
+          {items?.length ? (
+            items?.map((item: ListItem) => (
+              <Item
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                description={item.description}
+                clickHandler={itemClickHandler}
+              />
+            ))
+          ) : (
+            <h2 data-testid="empty-text">No items</h2>
+          )}
         </ul>
       )}
     </div>
