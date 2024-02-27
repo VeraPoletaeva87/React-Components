@@ -1,19 +1,21 @@
-import React, { ChangeEvent, useCallback, useContext, useEffect } from 'react';
+import React, { ChangeEvent, useCallback, useEffect } from 'react';
 import './search.css';
-import { AppContext, AppContextType } from '../../AppContext';
+import type { RootState } from '../../store';
+import { useSelector, useDispatch } from 'react-redux';
+import { changSearch } from '../../features/searchSlice';
 
 interface SearchProps {
   onSearch: (value: string) => void;
 }
 
 function Search(props: SearchProps) {
-  const { searchString, setSearchString } =
-    useContext<AppContextType>(AppContext);
+  const searchString = useSelector((state: RootState) => state.search.value);
+  const dispatch = useDispatch();
 
   useEffect(() => {}, [searchString]);
 
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setSearchString(e.target.value);
+    dispatch(changSearch(e.target.value));
   }, []);
 
   const hadleSearchClick = useCallback(() => {
@@ -23,13 +25,18 @@ function Search(props: SearchProps) {
   return (
     <div className="search-block">
       <input
+        className="search-field"
         type="search"
         data-testid="search-input"
         id="search"
         value={searchString}
         onChange={handleInputChange}
       />
-      <button data-testid="search-button" onClick={hadleSearchClick}>
+      <button
+        className="search-button"
+        data-testid="search-button"
+        onClick={hadleSearchClick}
+      >
         Search
       </button>
     </div>
